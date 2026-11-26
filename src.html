@@ -1,0 +1,489 @@
+<title>عبرميتو</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800;900&family=Lalezar&display=swap">
+<style>
+/* Layout: سبورة الجملة في الأعلى (عمود لكل كلمة)، وتحتها لوحة القطع بتبويبات الاسم/الفعل/الحرف كما في اللوحة المطبوعة */
+:root{
+  --bg:#ebe8fb; --panel:#ffffff; --panel2:#e3e8f7; --ink:#1b1746; --ink2:#5a5f86; --line:#c9d0ea;
+  --purple:#2b1565; --purple-ink:#ffffff; --gold:#ffd23f; --gold-ink:#2b2100; --sky:#25b4f5; --sky-ink:#032a40;
+  --paper:#ffffff; --paper-ink:#1b1746; --navy:#1767a8; --good:#17a34a; --bad:#e23d4b; --glow:#ff7a1a;
+  --teamA:#e8573d; --teamB:#0f9d8a;
+  --font:'Cairo','Segoe UI',Tahoma,sans-serif; --display:'Lalezar','Cairo',sans-serif;
+  --zoom:1; --ch:4.4rem;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#080c2b; --panel:#12185a; --panel2:#1b1a6d; --ink:#f2f0ff; --ink2:#b4b0e6; --line:#3b3fa6;
+  --purple:#5b34c9; --paper:#f7f8ff; --navy:#2a5bd7; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#080c2b; --panel:#12185a; --panel2:#1b1a6d; --ink:#f2f0ff; --ink2:#b4b0e6; --line:#3b3fa6;
+  --purple:#5b34c9; --paper:#f7f8ff; --navy:#2a5bd7; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{font-size:calc(var(--zoom) * clamp(11px, .85vw, 21px))}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-weight:600;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:.6rem}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--glow);outline-offset:2px}
+.app{display:grid;gap:.7rem;max-width:2000px;margin:auto}
+/* الشريط العلوي */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:.8rem;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:.7rem}
+.brand h1{margin:0;font:400 2.6rem/1 var(--display);color:var(--purple)}
+:root[data-theme="dark"] .brand h1{color:var(--gold)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand h1{color:var(--gold)}}
+.brand span{color:var(--ink2);font-size:1rem}
+.brand .by{background:var(--gold);color:var(--gold-ink);border-radius:999px;padding:.2rem .9rem;font-size:1.05rem}
+.brand .by b{font-weight:900}
+.seg{display:flex;background:var(--panel2);border-radius:999px;padding:.25rem;gap:.2rem}
+.seg button{border:0;background:none;padding:.45rem 1.3rem;border-radius:999px;font-size:1.15rem;font-weight:800}
+.seg button[aria-pressed="true"]{background:var(--purple);color:#fff}
+.tools{display:flex;gap:.4rem;align-items:center}
+.ib{border:2px solid var(--line);background:var(--panel);border-radius:.7rem;min-width:2.6rem;height:2.6rem;font-size:1.05rem;font-weight:800;padding:0 .6rem}
+.ib[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+/* السبورة */
+.board{background:var(--panel);border:3px solid var(--navy);border-radius:1.2rem;padding:.8rem 1rem 1rem;min-height:15rem}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem}
+.nav{display:flex;align-items:center;gap:.5rem;font-size:1.1rem}
+.nav .ib{font-size:1.3rem}
+.ask{color:var(--ink2);font-size:1.1rem}
+.words{display:flex;flex-wrap:wrap;gap:1rem .9rem;justify-content:flex-start}
+.col{display:flex;flex-direction:column;align-items:center;gap:.5rem;min-width:8.5rem;padding:.5rem .6rem;border-radius:1rem;border:3px solid transparent}
+.col.active{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,transparent);animation:pulse 1.6s ease-in-out infinite}
+.col.done .word{color:var(--good)}
+.word{font-size:2.7rem;font-weight:900;line-height:1.5;white-space:nowrap}
+.word .u{border-radius:.4rem;padding:0 .05em}
+.word .u.cur{background:var(--gold);color:var(--gold-ink)}
+.tracks{display:flex;gap:.5rem;align-items:flex-start}
+.track{display:flex;flex-direction:column;gap:.3rem;min-width:7.6rem}
+.slot{height:2.4rem;border:2px dashed var(--line);border-radius:.5rem;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.slot.open{border-color:var(--glow)}
+.pc{border:0;border-radius:.55rem;font-weight:800;line-height:1.15;text-align:center}
+.pc.fn{background:var(--purple);color:var(--purple-ink)}
+.pc.st{background:var(--sky);color:var(--sky-ink)}
+.pc.sg{background:var(--paper);color:var(--paper-ink);border:2px solid var(--line)}
+.slot .pc{width:100%;height:100%;font-size:1.15rem;padding:0 .3rem;animation:pop .35s}
+/* لوحة القطع */
+.tray{background:var(--panel);border:3px solid var(--navy);border-radius:1.2rem;padding:.7rem .9rem 1rem}
+.tabs{display:flex;gap:.5rem;margin-bottom:.7rem}
+.tabs button{border:0;background:var(--navy);color:#fff;font:400 1.6rem/1 var(--display);padding:.5rem 2rem;border-radius:.8rem .8rem 0 0;opacity:.6}
+.tabs button[aria-selected="true"]{opacity:1;box-shadow:0 .25rem 0 var(--gold)}
+.tabs button.flash{animation:flash .5s 4}
+.sect{display:none}.sect.on{display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-start}
+.grp{display:flex;flex-direction:column;gap:.4rem;flex:1 1 14rem;min-width:0}
+.gt{background:var(--gold);color:var(--gold-ink);border-radius:.5rem;text-align:center;font-size:1.3rem;font-weight:900;height:2.7rem;display:flex;align-items:center;justify-content:center;flex:none}
+.gt.pu{background:var(--purple);color:#fff}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.btn-p{padding:.55rem .3rem;font-size:1.25rem;min-height:2.7rem}
+.btn-p.sm{font-size:1.05rem}
+.btn-p:hover{filter:brightness(1.12)}
+.btn-p.shake{animation:shake .4s;outline:3px solid var(--bad)}
+.btn-p.glow{animation:glow .7s infinite alternate}
+.btn-p.strong{animation:glow .35s infinite alternate;outline:4px solid var(--glow)}
+.clue{background:var(--gold);color:var(--gold-ink);border-radius:.5rem;font-size:.88rem;line-height:1.2;padding:.25rem .35rem;text-align:center;font-weight:800;display:flex;align-items:center;justify-content:center;height:var(--ch);flex:none;overflow:hidden}
+.signs{display:grid;gap:.4rem;grid-auto-flow:column;grid-auto-columns:1fr}
+.signcell{display:flex;flex-direction:column;gap:.3rem}
+.vrow{display:grid;grid-template-columns:1.35fr 1fr;gap:.4rem;align-items:stretch}
+.vrow .btn-p{height:var(--ch);min-height:0}
+.vgrid{display:grid;gap:.4rem}
+.vblock{background:var(--panel2);border-radius:.8rem;padding:.5rem;display:flex;flex-direction:column;gap:.4rem;flex:1 1 20rem;min-width:0}
+/* شريط التحكم */
+.ctl{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;justify-content:space-between}
+.flashbtn{border:0;background:var(--glow);color:#fff;border-radius:999px;padding:.6rem 1.5rem;font-size:1.3rem;font-weight:900;display:flex;gap:.5rem;align-items:center}
+.hint{flex:1 1 20rem;background:var(--panel2);border-radius:.9rem;padding:.55rem 1rem;font-size:1.25rem;min-height:3rem;display:flex;align-items:center}
+.teams{display:flex;gap:.5rem}
+.team{border:3px solid var(--line);background:var(--panel);border-radius:.9rem;padding:.3rem .8rem;display:flex;gap:.6rem;align-items:center;font-size:1.1rem}
+.team b{font-size:1.7rem;font-variant-numeric:tabular-nums}
+.team.on{border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 30%,transparent)}
+.team i{width:.9rem;height:.9rem;border-radius:50%;background:var(--c)}
+.team .pm{border:0;background:var(--panel2);border-radius:.4rem;width:1.6rem;height:1.6rem;font-weight:900;padding:0}
+/* النافذة الختامية */
+.modal{position:fixed;inset:0;background:rgba(8,10,35,.72);display:none;align-items:center;justify-content:center;padding:1rem;z-index:20}
+.modal.on{display:flex}
+.card{background:var(--panel);border:4px solid var(--gold);border-radius:1.4rem;max-width:min(60rem,100%);max-height:92vh;overflow:auto;padding:1.2rem 1.6rem;display:grid;gap:.8rem}
+.card h2{margin:0;font:400 2.6rem var(--display);color:var(--good)}
+.stars{font-size:2.4rem;letter-spacing:.2rem;color:var(--gold)}
+.res{display:grid;gap:.4rem;font-size:1.5rem}
+.res div{background:var(--panel2);border-radius:.7rem;padding:.4rem .9rem}
+.res b{color:var(--purple);font-weight:900}
+:root[data-theme="dark"] .res b{color:var(--gold)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .res b{color:var(--gold)}}
+.go{border:0;background:var(--purple);color:#fff;border-radius:.9rem;padding:.7rem 1.4rem;font-size:1.4rem;font-weight:900}
+.go.alt{background:var(--panel2);color:var(--ink)}
+.rowb{display:flex;gap:.6rem;flex-wrap:wrap}
+.pop{position:absolute;inset:0;pointer-events:none}
+.set{position:absolute;background:var(--panel);border:2px solid var(--line);border-radius:.9rem;padding:.7rem;display:none;gap:.5rem;flex-direction:column;z-index:10;font-size:1rem;min-width:14rem}
+.set.on{display:flex}.set label{display:flex;gap:.5rem;align-items:center}
+.fly{position:fixed;z-index:30;pointer-events:none}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes glow{from{box-shadow:0 0 0 0 var(--glow);filter:brightness(1)}to{box-shadow:0 0 1.2rem .4rem var(--glow);filter:brightness(1.25)}}
+@keyframes pulse{50%{box-shadow:0 0 1.4rem 0 color-mix(in srgb,var(--gold) 60%,transparent)}}
+@keyframes flash{50%{background:var(--glow)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+@media (max-width:700px){.word{font-size:2rem}.cols2{grid-template-columns:1fr 1fr}.brand h1{font-size:2rem}}
+
+.edc{width:min(72rem,100%);gap:.7rem}
+.edc h2{color:var(--purple)}
+:root[data-theme="dark"] .edc h2{color:var(--gold)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .edc h2{color:var(--gold)}}
+.edc textarea{width:100%;font:800 1.7rem/1.6 var(--font);background:var(--panel2);color:var(--ink);border:2px solid var(--line);border-radius:.8rem;padding:.5rem .8rem;resize:vertical;min-height:4.2rem}
+.edc small,.edc .note{color:var(--ink2);font-size:1rem;font-weight:600}
+.urow{background:var(--panel2);border-radius:.9rem;padding:.6rem .8rem;display:grid;gap:.4rem}
+.urow .uw{font-size:2rem;font-weight:900}
+.ctrls{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.ctrls label{display:flex;flex-direction:column;gap:.15rem;font-size:.85rem;color:var(--ink2)}
+.ctrls select{font:700 1.05rem var(--font);background:var(--panel);color:var(--ink);border:2px solid var(--line);border-radius:.6rem;padding:.3rem .5rem;max-width:15rem}
+.ust{font-size:1.15rem;display:grid;gap:.15rem}
+.ust .ok{color:var(--good)}.ust .er{color:var(--bad)}.ust .wn{color:#b7791f}
+:root[data-theme="dark"] .ust .wn{color:var(--gold)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ust .wn{color:var(--gold)}}
+.saved{display:flex;flex-wrap:wrap;gap:.4rem}
+.saved span{background:var(--panel2);border-radius:.6rem;padding:.2rem .3rem .2rem .7rem;display:flex;gap:.5rem;align-items:center;font-size:1.1rem}
+.saved button{border:0;background:var(--bad);color:#fff;border-radius:.4rem;width:1.5rem;height:1.5rem;padding:0;font-weight:900}
+.empty{font-size:1.5rem;color:var(--ink2);padding:1.5rem}
+
+.fabox{background:color-mix(in srgb,var(--gold) 22%,var(--panel));border:2px solid var(--gold);border-radius:.9rem;padding:.6rem 1rem;font-size:1.45rem;margin-bottom:.6rem}
+.dir{background:var(--sky);color:var(--sky-ink);border-radius:.5rem;font-size:.95rem;padding:.1rem .5rem;text-align:center;font-weight:800}
+.tm{display:flex;align-items:center;gap:.6rem}
+.tm #tmT{font:900 2rem var(--font);font-variant-numeric:tabular-nums;min-width:4.2rem;text-align:center}
+.tm i{display:block;width:9rem;height:.8rem;background:var(--panel2);border-radius:99px;overflow:hidden}
+.tm u{display:block;height:100%;background:var(--good);width:100%;transition:width .25s linear}
+.tm.warn #tmT{color:var(--bad)}.tm.warn u{background:var(--bad)}
+.teams{display:flex;flex-wrap:wrap;gap:.5rem}
+.teams.many .team{padding:.15rem .5rem;font-size:.9rem;gap:.35rem}
+.teams.many .team b{font-size:1.2rem}
+.team{position:relative}
+.team .nm{max-width:9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.delta{position:absolute;top:-.4rem;left:50%;font:900 1.6rem var(--font);pointer-events:none;animation:rise 1.1s forwards}
+.delta.p{color:var(--good)}.delta.m{color:var(--bad)}
+@keyframes rise{to{transform:translateY(-2.4rem);opacity:0}}
+.opt{display:grid;gap:.4rem;background:var(--panel2);border-radius:.9rem;padding:.6rem .8rem}
+.opt .seg{width:fit-content}
+.opt select,.opt input{font:700 1.1rem var(--font);background:var(--panel);color:var(--ink);border:2px solid var(--line);border-radius:.6rem;padding:.3rem .5rem}
+.opt input[type=number]{width:6rem}
+.tnames{display:grid;grid-template-columns:repeat(auto-fill,minmax(11rem,1fr));gap:.4rem}
+.tnames input{width:100%}
+.det{display:grid;gap:.5rem;font-size:1.35rem;line-height:1.7}
+.det .sent{font-size:2.2rem;font-weight:900}
+.det .mean{color:var(--ink2)}
+.det li{margin-bottom:.4rem}.det li b{color:var(--purple)}
+:root[data-theme="dark"] .det li b{color:var(--gold)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .det li b{color:var(--gold)}}
+.det ul{padding-inline-start:1.2rem;margin:0}
+
+.fixed{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);display:grid;gap:.5rem;padding-bottom:.5rem;box-shadow:0 .6rem .8rem -.6rem rgba(10,14,40,.35)}
+.board{position:relative;min-height:0;padding:.5rem .9rem .7rem}
+.bar{margin-bottom:.3rem}
+.bulbs{gap:.4rem}.bulb{filter:drop-shadow(0 0 .5rem rgba(255,210,63,.9));animation:bulb 2.4s ease-in-out infinite}
+@keyframes bulb{50%{filter:drop-shadow(0 0 .9rem rgba(255,210,63,1))}}
+.fabox{position:absolute;inset-inline:1rem;top:3.6rem;z-index:8;margin:0;box-shadow:0 1rem 2rem rgba(10,14,40,.35)}
+.sent{display:flex;flex-wrap:wrap;gap:.1rem 1.1rem;padding:.2rem .6rem .5rem;border-bottom:2px dashed var(--line);margin-bottom:.5rem;font-size:var(--sw,2.6rem)}
+.sw{display:flex;flex-direction:column;align-items:center}
+.swt{font-weight:900;line-height:1.55;white-space:nowrap}
+.swt .u{border-radius:.35em;padding:0 .04em}
+.swt .u.cur{background:var(--gold);color:var(--gold-ink)}
+.swt .u.done{color:var(--good)}
+.swt .u.hole{background:none;color:transparent;outline:2px dashed var(--gold);outline-offset:1px}
+.swt .u.upop{animation:upop .7s cubic-bezier(.3,1.4,.4,1)}
+@keyframes upop{0%{transform:scale(.6)}60%{transform:scale(1.25);text-shadow:0 0 .6em var(--good)}100%{transform:scale(1)}}
+.subs{display:flex;gap:.25rem;justify-content:center;min-height:1.45rem}
+.sub{font-size:.8rem;border-radius:.4rem;padding:.05rem .5rem;font-weight:800;line-height:1.3}
+.sub.fn{background:var(--purple);color:#fff}.sub.dir{background:var(--sky);color:var(--sky-ink)}
+.bench{display:flex;gap:1rem;align-items:center;min-height:7.2rem}
+.bcol{display:flex;flex-direction:column;align-items:center;gap:.3rem;flex:none}
+.bcard{font-size:3rem;font-weight:900;line-height:1.4;padding:.1rem 1.2rem;min-width:8rem;text-align:center;background:var(--gold);color:var(--gold-ink);border-radius:1.1rem;white-space:nowrap;box-shadow:0 .3rem 0 #d99a00}
+.bcard.land{animation:land .6s cubic-bezier(.3,1.5,.4,1)}
+@keyframes land{0%{transform:scale(1.18)}100%{transform:scale(1)}}
+.bdir{min-height:1.3rem}.bdir:not(:empty){background:var(--sky);color:var(--sky-ink);border-radius:.4rem;padding:.05rem .6rem;font-size:.95rem;font-weight:800}
+.bright{flex:1;min-width:0;display:grid;gap:.3rem}
+.chain{display:flex;gap:.5rem;flex-wrap:wrap;min-height:3.4rem;transition:opacity .25s,transform .25s}
+.chain.collapse{opacity:0;transform:translateX(3rem) scale(.9)}
+.chain .slot{height:3.4rem;min-width:8rem;flex:1 1 8rem;max-width:13rem}
+.chain .slot .pc{font-size:1.3rem;animation:none}.chain .slot .pc.new{animation:pop .35s}
+.compose{font-size:1.5rem;font-weight:800;min-height:2.1rem;color:var(--ink)}
+.wflight{position:fixed;z-index:40;pointer-events:none;display:flex;align-items:center;justify-content:center;background:var(--gold);color:var(--gold-ink);border-radius:1.1rem;font-weight:900;white-space:nowrap;transform-origin:center;box-shadow:0 .5rem 1.6rem rgba(255,122,26,.55)}
+.wflight.up{background:var(--good);color:#fff}
+.wflight.trail{box-shadow:none}
+.fabox{display:flex;gap:.8rem;align-items:flex-start;justify-content:space-between}.fabox[hidden]{display:none}.fabox .fx{flex:none;border:2px solid var(--gold-ink,#7a5600);background:var(--panel);color:inherit;border-radius:.6rem;font:inherit;font-size:1rem;font-weight:800;padding:.15rem .8rem;cursor:pointer}
+@media (max-width:900px){
+.fixed{display:contents}.board{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;box-shadow:0 .5rem .7rem -.4rem rgba(10,14,40,.4)}.bar{gap:.3rem;margin-bottom:.15rem}.ask{display:none}.bulb{width:24px;height:24px}.bar .ib,.nav .ib{padding:.1rem .6rem}.sent{font-size:calc(var(--sw,2.6rem)*.62);padding:.1rem .3rem .25rem;margin-bottom:.3rem}
+.fixed header{padding:.2rem .4rem}.fixed header .tag,.fixed header .sub,.fixed header small{display:none}
+.board{padding:.35rem .5rem .45rem;border-width:2px}
+.bench{gap:.5rem;min-height:0}.bcard{font-size:1.7rem;min-width:4.2rem;padding:0 .6rem;border-radius:.7rem}
+.bdir{font-size:.8rem}.compose{font-size:.9rem}
+.chain{min-height:2.2rem;gap:.3rem}.chain .slot{height:2.2rem;min-width:4.2rem;flex:1 1 4.2rem}.chain .slot .pc{font-size:.85rem}
+.fabox{font-size:1rem;top:3rem}.fabox .fx{font-size:.85rem}
+.teams .team{padding:.1rem .4rem}.fixed .hintrow,.fixed #hintbar{font-size:.9rem}
+}
+[data-theme="dark"] body{background:radial-gradient(900px 500px at 90% -10%,rgba(124,77,255,.28),transparent 60%),radial-gradient(800px 500px at -5% 105%,rgba(37,99,235,.25),transparent 60%),var(--bg);background-attachment:fixed}
+.tray.beg .sect{justify-content:center}.tray.beg .vblock,.tray.beg .grp{max-width:62rem}
+.modal{z-index:80!important}
+.h-by{flex-wrap:wrap;justify-content:center;max-width:100%;font-size:clamp(.95rem,3.6vw,1.25rem)}.h-wrap>*,.h-hero>*,.h-grid>*{min-width:0}.h-wrap{width:100%}.h-lv small{display:block}
+#edMean,#edLv,#edFa{background:var(--panel);color:var(--ink);border:2px solid var(--line);border-radius:.6rem;padding:.4rem .6rem;font:inherit}
+canvas#conf{position:fixed;inset:0;pointer-events:none;z-index:25}
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;margin-bottom:.35rem}.hgrid .btn-p{margin:0}
+/* ===== الواجهة الرئيسية ===== */
+body.homing{overflow:hidden}
+.home{position:fixed;inset:0;z-index:60;overflow:auto;color:#f3f1ff;font-family:var(--font);
+  background:radial-gradient(1100px 620px at 88% -8%,rgba(139,92,246,.55),transparent 60%),radial-gradient(900px 560px at -5% 105%,rgba(37,99,235,.45),transparent 60%),linear-gradient(160deg,#0a0f33 0%,#120a3d 55%,#0a1240 100%);
+  transition:transform .55s cubic-bezier(.7,0,.2,1),opacity .45s ease,filter .45s}
+.home.out{transform:scale(1.08);opacity:0;filter:blur(8px);pointer-events:none}
+.home[hidden]{display:none!important}
+.h-letters{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.h-letters i{position:absolute;font:400 var(--s,5rem)/1 var(--display);color:rgba(167,139,250,.13);left:var(--x);top:110%;animation:hfloat var(--d,22s) linear var(--dl,0s) infinite;font-style:normal}
+@keyframes hfloat{to{transform:translateY(-130vh) rotate(25deg)}}
+.h-wrap{position:relative;max-width:1500px;margin:auto;padding:1.6rem clamp(1rem,3vw,3rem) 2rem;display:grid;gap:1.4rem}
+.h-hero{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:1.6rem}
+.h-logo{width:11rem;height:11rem;border-radius:50%;background:#fff;padding:.5rem;box-shadow:0 0 0 .35rem rgba(255,210,63,.55),0 0 3.5rem rgba(167,139,250,.7);animation:hpop .8s cubic-bezier(.2,1.4,.4,1) both}
+.h-logo img{width:100%;height:100%;object-fit:contain;border-radius:50%;display:block}
+.h-title{text-align:center;animation:hup .7s .1s both}
+.h-title h1{margin:0;font:400 clamp(3.4rem,7vw,6.4rem)/1.05 var(--display);background:linear-gradient(90deg,#ffe27a,#fff,#c4b5fd);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .25rem 1rem rgba(139,92,246,.6))}
+.h-title p{margin:.3rem 0 0;font-size:1.35rem;color:#cfc8ff}
+.h-by{margin-top:.8rem;display:inline-flex;align-items:center;gap:.7rem;background:rgba(255,210,63,.14);border:2px solid rgba(255,210,63,.6);border-radius:999px;padding:.35rem 1.2rem;font-size:1.25rem;color:#ffe9a0}
+.h-by b{color:#fff;font-weight:900}
+.h-person{display:grid;justify-items:center;gap:.5rem;animation:hpop .8s .15s cubic-bezier(.2,1.4,.4,1) both}
+.h-photo{width:11rem;height:11rem;border-radius:50%;overflow:hidden;background:#fff;box-shadow:0 0 0 .35rem #8b5cf6,0 0 0 .6rem rgba(255,255,255,.12),0 0 3.5rem rgba(37,99,235,.7)}
+.h-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.h-person small{background:linear-gradient(90deg,var(--hp,#6d3fe0),var(--hn,#2a4fd6));padding:.25rem 1rem;border-radius:999px;font-weight:800;font-size:1rem;text-align:center}
+.h-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-areas:"lv sys md" "lv snd md";gap:1.1rem;align-items:start}
+.h-card:nth-child(1){grid-area:lv}.h-card:nth-child(2){grid-area:sys}.h-card:nth-child(3){grid-area:md}.h-card:nth-child(4){grid-area:snd}
+@media (max-width:1100px){.h-grid{grid-template-columns:1fr;grid-template-areas:"lv" "sys" "md" "snd"}}
+.h-card{background:linear-gradient(180deg,rgba(40,30,110,.72),rgba(14,20,70,.78));border:1.5px solid rgba(167,139,250,.38);border-radius:1.3rem;padding:1.1rem 1.2rem 1.2rem;backdrop-filter:blur(6px);box-shadow:0 1rem 2.5rem rgba(0,0,10,.35);animation:hup .6s both}
+.h-card:nth-child(2){animation-delay:.08s}.h-card:nth-child(3){animation-delay:.16s}.h-card:nth-child(4){animation-delay:.24s}
+.h-card h2{margin:0 0 .8rem;font:400 1.7rem/1 var(--display);color:#ffe27a;display:flex;gap:.5rem;align-items:center}
+.h-card h2 em{font-style:normal;background:#8b5cf6;color:#fff;border-radius:50%;width:1.9rem;height:1.9rem;display:grid;place-items:center;font:800 1.05rem var(--font)}
+.h-levels{display:grid;gap:.5rem}
+.h-lv{display:flex;align-items:center;gap:.8rem;text-align:start;border:2px solid rgba(167,139,250,.35);background:rgba(10,15,60,.55);color:#f3f1ff;border-radius:1rem;padding:.55rem .9rem;transition:transform .18s,background .18s,border-color .18s}
+.h-lv:hover{transform:translateX(-.25rem);border-color:#c4b5fd}
+.h-lv b{font-size:1.25rem;display:block}.h-lv small{color:#b9b2ee;font-size:.95rem}
+.h-lv i{margin-inline-start:auto;font-style:normal;background:rgba(255,255,255,.12);border-radius:999px;padding:.1rem .7rem;font-size:.95rem}
+.h-lv[aria-pressed="true"]{background:linear-gradient(90deg,var(--hp,#6d3fe0),var(--hn,#2a4fd6));border-color:#ffe27a;box-shadow:0 0 1.6rem rgba(139,92,246,.7)}
+.h-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:.4rem;background:rgba(5,8,40,.6);border-radius:1rem;padding:.3rem}
+.h-seg button{border:0;background:none;color:#cfc8ff;padding:.6rem .5rem;border-radius:.8rem;font-size:1.1rem;font-weight:800}
+.h-seg button[aria-pressed="true"]{background:linear-gradient(90deg,var(--hp,#7c4dff),var(--hn,#3558e8));color:#fff;box-shadow:0 .3rem 1rem rgba(124,77,255,.5)}
+.h-modes{display:grid;gap:.5rem;margin-top:.7rem}
+.h-modes button{display:block;text-align:start;border:2px solid rgba(167,139,250,.35);background:rgba(10,15,60,.55);color:#f3f1ff;border-radius:1rem;padding:.55rem .9rem}
+.h-modes b{display:block;font-size:1.2rem}.h-modes small{color:#b9b2ee;font-size:.95rem;line-height:1.5}
+.h-modes button[aria-pressed="true"]{background:linear-gradient(90deg,var(--hp,#6d3fe0),var(--hn,#2a4fd6));border-color:#ffe27a}
+.h-row{display:flex;flex-wrap:wrap;gap:.6rem .9rem;align-items:center;margin-top:.7rem;color:#dcd7ff;font-size:1.05rem}
+.h-row select,.h-row input[type=number],.h-card input[type=text]{background:rgba(5,8,40,.75);color:#fff;border:1.5px solid rgba(167,139,250,.5);border-radius:.7rem;padding:.4rem .6rem;font:inherit}
+.h-names{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;margin-top:.5rem;max-height:13rem;overflow:auto}
+.h-names input{width:100%}
+.h-tog{display:flex;align-items:center;justify-content:space-between;gap:.8rem;background:rgba(5,8,40,.55);border-radius:.9rem;padding:.5rem .8rem;margin-bottom:.5rem}
+.h-tog button{border:0;border-radius:999px;background:#3a3f78;color:#fff;font-weight:800;padding:.3rem 1.1rem;min-width:4.4rem}
+.h-tog button[aria-pressed="true"]{background:linear-gradient(90deg,var(--hp,#7c4dff),var(--hn,#3558e8))}
+.h-tog input[type=range]{width:9rem;accent-color:#a78bfa}
+.h-foot{display:flex;flex-wrap:wrap;gap:.8rem;justify-content:center;align-items:center;margin-top:.2rem}
+.h-start{border:0;border-radius:1.2rem;padding:.9rem 3.4rem;font:400 2.2rem/1 var(--display);color:#2b2100;background:linear-gradient(180deg,#ffe27a,#ffbe1f);box-shadow:0 .5rem 0 #b9810a,0 1rem 2.6rem rgba(255,190,31,.45);animation:hbeat 1.8s ease-in-out infinite}
+.h-start:hover{transform:translateY(-.15rem)}
+.h-start:active{transform:translateY(.3rem);box-shadow:0 .15rem 0 #b9810a}
+.h-sec{border:2px solid rgba(167,139,250,.6);background:rgba(10,15,60,.6);color:#fff;border-radius:999px;padding:.5rem 1.4rem;font-size:1.1rem;font-weight:800}
+.h-sec:hover{background:rgba(124,77,255,.4)}
+.h-credit{text-align:center;color:#b9b2ee;font-size:1.05rem}
+.h-credit b{color:#ffe27a}
+@keyframes hup{from{opacity:0;transform:translateY(1.6rem)}to{opacity:1;transform:none}}
+@keyframes hpop{from{opacity:0;transform:scale(.5) rotate(-8deg)}to{opacity:1;transform:none}}
+@keyframes hbeat{50%{transform:scale(1.04)}}
+@media (max-width:820px){.h-hero{grid-template-columns:1fr 1fr;grid-template-areas:"t t" "l p"}.h-title{grid-area:t;order:-1}.h-logo,.h-photo{width:7.5rem;height:7.5rem}.h-logo{justify-self:center}.h-person{justify-self:center}.h-start{font-size:1.8rem;padding:.8rem 2.4rem}}
+/* شعار وصورة مصغّرة في رأس اللعبة */
+.brand .mini{width:2.6rem;height:2.6rem;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 0 0 2px var(--gold);align-self:center}
+.brand .mini.ph{box-shadow:0 0 0 2px #8b5cf6}
+/* دخول اللعبة */
+.app.enter .top{animation:hup .5s both}.app.enter .board{animation:hup .5s .08s both}.app.enter .ctl,.app.enter .teams{animation:hup .5s .16s both}.app.enter .tray{animation:hup .5s .24s both}
+.sent.fresh .sw{animation:wIn .32s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--i,0)*45ms)}
+@keyframes wIn{from{opacity:0;transform:translateY(-1rem) scale(.8)}to{opacity:1;transform:none}}
+.bh{display:none!important}
+/* لوحة التعديل */
+.adm .card{width:min(1100px,96vw);max-height:92vh;overflow:auto}
+.adm .atabs{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.8rem}
+.adm .atabs button{border:2px solid var(--line);background:var(--panel2);border-radius:.8rem;padding:.4rem 1.1rem;font-weight:800;font-size:1.05rem}
+.adm .atabs button[aria-selected="true"]{background:var(--purple);color:#fff;border-color:var(--purple)}
+.adm .ap{display:none;gap:.7rem}.adm .ap.on{display:grid}
+.adm .fld{display:grid;gap:.25rem}.adm .fld>span{font-weight:800;font-size:.95rem;color:var(--ink2)}
+.adm input[type=text],.adm input[type=number],.adm select,.adm textarea{background:var(--panel);color:var(--ink);border:2px solid var(--line);border-radius:.6rem;padding:.4rem .6rem;font:inherit;width:100%}
+.adm textarea{min-height:5rem;resize:vertical}
+.adm .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.7rem}
+.adm .imgpick{display:flex;gap:.7rem;align-items:center}.adm .imgpick img{width:5rem;height:5rem;border-radius:50%;object-fit:cover;background:#fff;border:2px solid var(--line)}
+.adm .srow{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:center;border:2px solid var(--line);border-radius:.8rem;padding:.4rem .7rem;background:var(--panel)}
+.adm .srow.hid{opacity:.5}
+.adm .srow .t{font-size:1.25rem;font-weight:800}
+.adm .srow .bt{display:flex;gap:.3rem;flex-wrap:wrap}
+.adm .srow .bt button,.adm .mini-b{border:2px solid var(--line);background:var(--panel2);border-radius:.6rem;padding:.2rem .7rem;font-weight:800;font-size:.95rem}
+.adm .srow select{width:auto;padding:.15rem .4rem}.adm .lvh{font:400 1.4rem var(--display);color:var(--purple);margin:.6rem 0 .2rem}
+:root[data-theme="dark"] .adm .lvh{color:var(--gold)}
+.adm .row2{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.adm .colr{width:4rem;height:2.4rem;padding:0;border:2px solid var(--line);border-radius:.5rem;background:none}
+
+@media (max-width:700px){
+.h-wrap,.app{grid-template-columns:minmax(0,1fr)}
+.h-grid{grid-template-columns:minmax(0,1fr)!important}
+.app>*,.top>*{min-width:0}
+header.top{flex-wrap:wrap;gap:.3rem}
+.brand{flex-wrap:wrap;gap:.3rem;min-width:0}
+.brand .mini{width:1.8rem;height:1.8rem}
+.brand span:not(.by){display:none}
+.brand .by{font-size:.8rem;padding:.1rem .6rem}
+.seg{flex-wrap:wrap;max-width:100%}
+.seg button{padding:.35rem .8rem;font-size:1rem}
+.tools{flex-wrap:wrap;max-width:100%}
+.board,.bar,.nav{max-width:100%;box-sizing:border-box}
+.bar,.nav{flex-wrap:wrap}
+html{overflow-x:clip}
+}
+
+/* ===== واجهة بسيطة ===== */
+.h-wrap{max-width:30rem!important;display:flex!important;flex-direction:column;align-items:stretch;gap:1rem!important;min-height:100%;justify-content:center;padding:1.2rem 1.1rem 1.6rem!important}
+.h-logo{width:100%!important;height:auto!important;border-radius:1.6rem!important;padding:.4rem!important;box-shadow:0 0 0 .3rem rgba(255,210,63,.5),0 0 3rem rgba(167,139,250,.6)!important}
+.h-logo img{border-radius:1.2rem!important;object-fit:contain;aspect-ratio:3/2}
+.h-menu{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.h-pick{display:grid;grid-template-columns:1fr auto;grid-template-areas:"s i" "b i";align-items:center;text-align:start;gap:.1rem .5rem;background:rgba(10,15,60,.62);border:2px solid rgba(167,139,250,.45);color:#fff;border-radius:1rem;padding:.55rem .9rem;transition:transform .15s,border-color .15s}
+.h-pick:hover{transform:translateY(-.12rem);border-color:#ffe27a}
+.h-pick small{grid-area:s;color:#b9b2ee;font-size:.9rem}.h-pick b{grid-area:b;font-size:1.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.h-pick i{grid-area:i;font-style:normal;color:#ffe27a}
+.h-start{align-self:center}
+.h-credit{display:flex;align-items:center;justify-content:center;gap:.8rem;margin-top:.4rem;border-top:1px solid rgba(167,139,250,.3);padding-top:.9rem;text-align:start}
+.h-credit img{width:3.4rem;height:3.4rem;border-radius:50%;background:#fff;object-fit:contain;box-shadow:0 0 0 2px #ffe27a}
+.h-credit div{display:grid;line-height:1.4}.h-credit span{color:#b9b2ee;font-size:.95rem}.h-credit b{font-size:1.15rem}.h-credit small:empty{display:none}
+.pk{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:rgba(5,8,40,.72);backdrop-filter:blur(4px);padding:1rem;animation:pkin .18s both}
+.pk[hidden]{display:none}
+.pk-card{width:min(30rem,100%);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#2a1f78,#0f1650);border:2px solid rgba(167,139,250,.55);border-radius:1.3rem;padding:1.1rem 1.2rem;box-shadow:0 1.5rem 4rem rgba(0,0,10,.6);animation:pkpop .25s cubic-bezier(.2,1.3,.4,1) both}
+.pk-card h3{margin:0 0 .8rem;font-size:1.4rem;color:#ffe27a;text-align:center}
+.pk-ok{display:block;margin:.9rem auto 0;border:0;border-radius:999px;background:linear-gradient(90deg,#7c4dff,#3558e8);color:#fff;font-weight:900;font-size:1.1rem;padding:.5rem 2.4rem}
+@keyframes pkin{from{opacity:0}}@keyframes pkpop{from{opacity:0;transform:scale(.85) translateY(1rem)}}
+@media (max-width:420px){.h-menu{grid-template-columns:1fr}}
+/* لوحة الكلمة مثبّتة دائمًا */
+.board{position:sticky!important;top:0;z-index:6}
+.brand .mini.ph{width:2.8rem;height:2.8rem}
+
+body:not(.own) #hEd,body:not(.own) #hAdm,body:not(.own) #bEd{display:none!important}
+.h-lock{border:0;background:none;font-size:1.1rem;opacity:.55;padding:.3rem;color:#fff}.h-lock[hidden]{display:none}.h-lock:hover{opacity:1}
+
+/* تخطيط ثابت: اللوحة لا تتحرك، والقطع وحدها تُمرَّر */
+.app{height:100vh;height:100dvh;overflow:hidden;display:flex!important;flex-direction:column;gap:.5rem}
+.fixed{display:block!important;flex:none;position:static!important;box-shadow:none!important;padding:0!important;background:none!important}
+.fixed>*{margin-bottom:.45rem}
+.board{position:relative!important;top:auto!important}
+.tray{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+@media (max-width:700px){#lvseg,#bSet,#bZm,#bZl,#bFs{display:none!important}header.top{gap:.2rem}.fixed>*{margin-bottom:.25rem}}
+html,body{height:100%;overflow:hidden!important}.app{box-sizing:border-box}
+</style>
+<div class="home" id="home" dir="rtl">
+ <div class="h-letters" id="hLet" aria-hidden="true"></div>
+ <div class="h-wrap">
+  <div class="h-logo"><img id="hLogo" alt="عبرميتو"></div>
+  <div class="h-menu">
+   <button class="h-pick" data-pk="lv"><small>المرحلة</small><b id="hvLv"></b><i>▾</i></button>
+   <button class="h-pick" data-pk="sys"><small>نظام اللعب</small><b id="hvSys"></b><i>▾</i></button>
+   <button class="h-pick" data-pk="mode"><small>نمط الإعراب</small><b id="hvMode"></b><i>▾</i></button>
+   <button class="h-pick" data-pk="opt"><small>الإعدادات</small><b id="hvOpt"></b><i>▾</i></button>
+  </div>
+  <button class="h-start" id="hStart">ابدأ اللعب</button>
+  <div class="h-foot"><button class="h-sec" id="hEd">+ جملتي</button><button class="h-sec" id="hAdm">⚙ تعديل اللعبة</button></div>
+  <div class="h-credit"><button class="h-lock" id="hLock" title="دخول المالك" aria-label="دخول المالك">🔒</button><img id="hDev" alt="شعار أ. عبد الرازق العواضي"><div><span>لعبة من ابتكار</span><b id="hCreator">أ. عبد الرازق العواضي</b><small id="hCredit"></small></div></div>
+ </div>
+ <div class="pk" id="pk-own" hidden><div class="pk-card"><h3>دخول المالك</h3><p style="margin:0 0 .6rem;text-align:center;color:#cfc8ff">أدخل رمز المالك لفتح تعديل اللعبة.</p><input type="password" id="ownPin" inputmode="numeric" autocomplete="off" style="width:100%;text-align:center;font-size:1.3rem;padding:.5rem;border-radius:.7rem;border:1.5px solid rgba(167,139,250,.6);background:rgba(5,8,40,.75);color:#fff"><div id="ownMsg" style="text-align:center;color:#ffb4b4;min-height:1.4rem;margin-top:.3rem"></div><button class="pk-ok" id="ownGo">دخول</button></div></div>
+ <div class="pk" id="pk-lv" hidden><div class="pk-card"><h3>اختاروا المرحلة</h3><div class="h-levels" id="hLv"></div></div></div>
+ <div class="pk" id="pk-sys" hidden><div class="pk-card"><h3>نظام اللعب</h3>
+   <div class="h-seg" id="hSys"><button data-v="solo">تمرين فردي</button><button data-v="teams">مسابقة جماعية</button></div>
+   <div id="hTeams" hidden><div class="h-row"><label>عدد الفرق (حتى 20) <input type="number" id="hN" min="2" max="20" value="2" style="width:5rem"></label></div><div class="h-names" id="hNames"></div>
+     <div class="h-row"><label>وقت دور الفريق لكل كلمة <select id="hTurn"><option value="0">بلا وقت</option><option value="15">15 ثانية</option><option value="30">30 ثانية</option><option value="45">45 ثانية</option><option value="60">دقيقة</option></select></label></div>
+     <button class="pk-ok">تم</button></div></div></div>
+ <div class="pk" id="pk-mode" hidden><div class="pk-card"><h3>نمط الإعراب</h3>
+   <div class="h-modes" id="hMode">
+    <button data-v="normal"><b>عادي</b><small>اختاروا القطع من اللوحة كاملة، والومضة تلمّح لكم.</small></button>
+    <button data-v="timed"><b>تحدي الوقت</b><small>عدّ تنازلي ومؤثرات صوتية، ومكافأة على الوقت المتبقي.</small></button>
+    <button data-v="beginner"><b>وضع المبتدئين</b><small>تظهر الخانة المناسبة للكلمة فقط، وأنتم تملؤون الحكم والعلامة.</small></button>
+   </div>
+   <div id="hTimed" hidden><div class="h-row"><label>وقت التحدي للجملة <select id="hTime"><option value="auto">تلقائي حسب الجملة</option><option value="30">30 ثانية</option><option value="60">دقيقة</option><option value="90">90 ثانية</option><option value="120">دقيقتان</option><option value="180">3 دقائق</option><option value="300">5 دقائق</option><option value="cus">وقت آخر…</option></select></label><input type="number" id="hTimeCus" min="10" max="900" value="60" style="width:5.5rem" hidden></div><button class="pk-ok">تم</button></div></div></div>
+ <div class="pk" id="pk-opt" hidden><div class="pk-card"><h3>الإعدادات</h3>
+   <div class="h-tog"><span>المؤثرات الصوتية</span><button id="hSnd" aria-pressed="true">تشغيل</button></div>
+   <div class="h-tog"><span>المظهر</span><div class="h-seg" id="hTheme" style="min-width:12rem"><button data-v="dark">داكن</button><button data-v="light">فاتح</button></div></div>
+   <div class="h-tog"><span>حجم الخط</span><div><button id="hZl" class="h-sec" style="padding:.2rem .9rem">A−</button> <button id="hZm" class="h-sec" style="padding:.2rem .9rem">A+</button></div></div>
+   <button class="pk-ok">تم</button></div></div>
+</div>
+
+<div class="app" id="app" dir="rtl">
+  <div class="fixed" id="fixed">
+  <header class="top">
+    <div class="brand"><img class="mini ph" id="gPhoto" alt=""><h1 id="gTitle">عبرميتو</h1><span id="gSub">العب • تعلّم • اكتشف</span><span class="by">ابتكار: <b id="gBy">الأستاذ عبد الرازق العواضي</b></span></div>
+    <div class="seg" id="lvseg" role="group" aria-label="المستوى">
+      <button data-lv="1" aria-pressed="true">ابتدائي</button><button data-lv="2" aria-pressed="false">إعدادي</button><button data-lv="3" aria-pressed="false">ثانوي</button><button data-lv="4" aria-pressed="false">جملي</button><button data-lv="5" aria-pressed="false">أمثلة الأكاديمية</button>
+    </div>
+    <div class="tools" style="position:relative">
+      <button class="ib" id="bHome" style="background:var(--navy);color:#fff;border-color:var(--navy)">الرئيسية</button>
+      <button class="ib" id="bEd" style="background:var(--purple);color:#fff;border-color:var(--purple)">+ جملتي</button>
+      <button class="ib" id="bSet" style="background:var(--gold);color:var(--gold-ink);border-color:var(--gold)">نظام اللعب</button>
+      <button class="ib" id="bSnd" aria-pressed="true" title="المؤثرات الصوتية">صوت</button>
+      <button class="ib" id="bZm" title="تكبير الخط">A+</button><button class="ib" id="bZl" title="تصغير الخط">A−</button>
+      <button class="ib" id="bTheme" title="سبورة فاتحة/داكنة">ثيم</button>
+      <button class="ib" id="bFs" title="ملء الشاشة">شاشة كاملة</button>
+    </div>
+  </header>
+  <section class="board" aria-label="سبورة الجملة">
+    <div class="bar"><div class="nav"><button class="ib" id="bPrev" aria-label="الجملة السابقة">›</button><span id="sNo"></span><button class="ib" id="bNext" aria-label="الجملة التالية">‹</button><button class="ib" id="bReset">إعادة</button></div><div class="ask" id="ask">أعربوا الكلمة النازلة باختيار القطع المناسبة</div>
+      <div class="nav bulbs"><svg class="bulb" width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffd23f" stroke="#d99a00" stroke-width="1" d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/><path fill="#d99a00" d="M9.5 19.5h5v1.3a1.2 1.2 0 0 1-1.2 1.2h-2.6a1.2 1.2 0 0 1-1.2-1.2z"/><path fill="none" stroke="#fff6c9" stroke-width="1.2" stroke-linecap="round" d="M9.5 9.2a3 3 0 0 1 2-2"/></svg><button class="ib" id="bDet">الإعراب التفصيلي</button><button class="ib" id="bFa">لمحة إعرابية</button></div></div>
+    <div class="fabox" id="faBox" hidden></div>
+    <div class="sent" id="sent" aria-live="polite"></div>
+    <div class="bench" id="bench"><div class="bcol"><div class="bcard" id="bcard"></div><div class="bdir" id="bdir"></div></div><div class="bright"><div class="chain" id="chain"></div><div class="compose" id="compose"></div></div></div>
+  </section>
+  <section class="ctl">
+    <button class="flashbtn" id="bFlash"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>ومضة <small id="fl"></small></button>
+    <div class="hint" id="hint">الومضة تلمّح لكم بالقطعة المناسبة، وكل ومضة تخصم نقطة.</div>
+    <div class="tm" id="tm" hidden><span id="tmT">00:00</span><i><u id="tmB"></u></i><button class="ib" id="bStart">ابدأ التحدي</button><button class="ib" id="bExt">+15 ث</button></div>
+  </section>
+  <section class="teams" id="teams" aria-label="الفرق"></section>
+  </div>
+  <section class="tray" aria-label="قطع الإعراب">
+    <div class="tabs" role="tablist" id="tabs"><button role="tab" data-t="n">الاسم</button><button role="tab" data-t="v">الفعل</button><button role="tab" data-t="h">الحرف</button></div>
+    <div id="sn" class="sect"></div><div id="sv" class="sect"></div><div id="sh" class="sect"></div>
+  </section>
+</div>
+<div class="modal" id="modal"><div class="card" dir="rtl"><h2 id="mT">أحسنتم!</h2><div class="stars" id="mS"></div><div class="res" id="mR"></div><div class="rowb"><button class="go" id="mNext">الجملة التالية</button><button class="go alt" id="mAgain">أعيدوا المحاولة</button><button class="go alt" id="mClose">إغلاق</button></div></div></div>
+<div class="modal adm" id="adm"><div class="card edc" dir="rtl"><h2>تعديل اللعبة</h2>
+ <div id="admLock" hidden><div class="fld"><span>أدخل رمز الحماية</span><input type="text" id="admPin" autocomplete="off"></div><div class="rowb"><button class="go" id="admUnlock">دخول</button><button class="go alt" id="admX0">إغلاق</button></div></div>
+ <div id="admBody">
+ <div class="atabs" id="aTabs"><button data-t="id" aria-selected="true">الهوية</button><button data-t="pl" aria-selected="false">اللعب والنقاط</button><button data-t="se" aria-selected="false">الجمل</button><button data-t="bk" aria-selected="false">نسخ احتياطي</button></div>
+ <div class="ap on" id="ap-id">
+  <div class="g2"><label class="fld"><span>اسم اللعبة</span><input type="text" id="aTitle"></label><label class="fld"><span>العبارة تحت الاسم</span><input type="text" id="aSub"></label>
+   <label class="fld"><span>اسم المبتكر</span><input type="text" id="aCreator"></label><label class="fld"><span>وصف المبتكر تحت الصورة</span><input type="text" id="aRole"></label></div>
+  <label class="fld"><span>سطر الحقوق أسفل الشاشة الرئيسية</span><input type="text" id="aCredit"></label>
+  <div class="g2"><div class="fld"><span>الشعار</span><div class="imgpick"><img id="aLogoP" alt=""><input type="file" id="aLogo" accept="image/*"></div></div><div class="fld"><span>الصورة الشخصية</span><div class="imgpick"><img id="aPhotoP" alt=""><input type="file" id="aPhoto" accept="image/*"></div></div></div>
+  <div class="row2"><label class="fld"><span>البنفسجي</span><input class="colr" type="color" id="aC1"></label><label class="fld"><span>الأزرق الغامق</span><input class="colr" type="color" id="aC2"></label><label class="fld"><span>الذهبي (الومضات)</span><input class="colr" type="color" id="aC3"></label><button class="mini-b" id="aCReset">الألوان الافتراضية</button></div>
+  <label class="fld"><span>رمز حماية لهذه اللوحة (اختياري — يمنع الطلاب من الدخول عادةً، وليس حماية تامة)</span><input type="text" id="aPin" placeholder="اتركه فارغًا بلا حماية"></label>
+ </div>
+ <div class="ap" id="ap-pl"><div class="g2">
+  <label class="fld"><span>نقاط القطعة الصحيحة</span><input type="number" id="aOk" min="0" max="20"></label><label class="fld"><span>خصم القطعة الخاطئة</span><input type="number" id="aBad" min="0" max="20"></label>
+  <label class="fld"><span>أساس خصم الومضة (×1 ثم ×2 ثم ×3)</span><input type="number" id="aFl" min="0" max="10"></label><label class="fld"><span>خصم إطالة الوقت</span><input type="number" id="aExt" min="0" max="20"></label>
+  <label class="fld"><span>ثواني الإطالة</span><input type="number" id="aExtS" min="5" max="120"></label><label class="fld"><span>سرعة الحركات</span><select id="aSpd"><option value="0.6">سريعة جدًا</option><option value="0.8">سريعة</option><option value="1">عادية</option><option value="1.4">هادئة</option></select></label>
+  <label class="fld"><span>عدد الفرق الافتراضي</span><input type="number" id="aTeams" min="2" max="20"></label>
+ </div></div>
+ <div class="ap" id="ap-se"><div class="row2"><button class="go" id="aNew">+ إضافة جملة جديدة</button><span class="note">عدّلوا إعراب أي جملة أو مغزاها أو لمحتها أو مستواها، أو أخفوها.</span></div><div id="aList"></div></div>
+ <div class="ap" id="ap-bk"><div class="note">كل ما عدّلتموه يُحفظ في هذا المتصفح. صدّروا نسخة احتياطية لنقلها إلى جهاز آخر.</div><div class="row2"><button class="go" id="aExp">تصدير نسخة (ملف)</button><label class="go alt" style="cursor:pointer">استيراد نسخة<input type="file" id="aImp" accept=".json" hidden></label><button class="go alt" id="aReset" style="color:#c0202f">إعادة كل شيء للأصل</button></div></div>
+ <div class="rowb"><button class="go" id="admSave">حفظ</button><button class="go alt" id="admX">إغلاق</button></div>
+ </div></div></div>
+<div class="modal adm" id="stx"><div class="card edc" dir="rtl"><h2>نصوص الجملة</h2><div class="sent" id="xS" style="font-size:1.6rem"></div>
+ <label class="fld"><span>المغزى</span><input type="text" id="xM"></label>
+ <label class="fld"><span>الإعراب التفصيلي (سطر لكل كلمة بالشكل: الكلمة: الإعراب)، واتركه فارغًا ليولَّد تلقائيًا</span><textarea id="xD" style="min-height:11rem"></textarea></label>
+ <label class="fld"><span>لمحة إعرابية</span><textarea id="xF"></textarea></label>
+ <div class="rowb"><button class="go" id="xOk">حفظ</button><button class="go alt" id="xX">إغلاق</button></div></div></div>
+
+<div class="modal" id="ed"><div class="card edc" dir="rtl"><h2>ورشة الجمل: أضيفوا جملتكم</h2>
+<div class="note">اكتب الجملة بالتشكيل وبين الكلمات مسافة. إذا اتصل بالكلمة ضمير أو تاء فافصل جزأيها بالرمز | مثل: كَتَبْ|تُ</div>
+<div class="rowb" style="gap:.6rem"><label>المستوى <select id="edLv"><option value="1">ابتدائي</option><option value="2">إعدادي</option><option value="3">ثانوي</option><option value="4" selected>جملي</option><option value="5">أمثلة الأكاديمية</option></select></label></div>
+<input type="text" id="edMean" placeholder="المغزى (اختياري)" aria-label="المغزى" style="width:100%">
+<textarea id="edIn" placeholder="مثال: كَتَبَ الطَّالِبُ الدَّرْسَ" aria-label="الجملة"></textarea>
+<div class="rowb"><button class="go" id="edSplit">قسّم إلى كلمات</button></div>
+<div id="edRows" style="display:grid;gap:.6rem"></div>
+<div id="edSum" class="res"></div>
+<textarea id="edFa" placeholder="لمحة إعرابية (اختياري)" aria-label="لمحة إعرابية" style="min-height:3.5rem"></textarea>
+<div class="rowb"><button class="go" id="edSave" style="display:none">احفظ والعب بها</button><button class="go alt" id="edClose">إغلاق</button></div>
+<div><b>جملي المحفوظة</b><div class="saved" id="edSaved"></div></div></div></div>
+<div class="modal" id="set"><div class="card edc" dir="rtl"><h2>نظام اللعب</h2>
+<div class="opt"><b>طريقة اللعب</b><div class="seg" data-k="system"><button data-v="solo">تمرين فردي</button><button data-v="teams">مسابقة جماعية</button></div></div>
+<div class="opt" id="oTeams"><b>الفرق (حتى 20 فريقًا)</b><label>عدد الفرق <input type="number" id="nTeams" min="2" max="20" value="2"></label><div class="tnames" id="tNames"></div></div>
+<div class="opt"><b>نمط الإعراب</b><div class="seg" data-k="mode"><button data-v="normal">عادي</button><button data-v="timed">تحدي الوقت</button><button data-v="beginner">وضع المبتدئين</button></div></div>
+<div class="opt" id="oTimed"><b>وقت التحدي للجملة كلها</b><div class="rowb"><select id="tSel"><option value="auto">تلقائي حسب حجم الجملة</option><option value="30">30 ثانية</option><option value="60">دقيقة</option><option value="90">90 ثانية</option><option value="120">دقيقتان</option><option value="180">3 دقائق</option><option value="300">5 دقائق</option><option value="cus">وقت أختاره...</option></select><input type="number" id="tCus" min="10" max="900" value="60" aria-label="الوقت بالثواني"> <small>ثانية</small></div></div>
+<div class="opt" id="oTurn"><b>وقت دور الفريق لكل كلمة</b><select id="tTurn"><option value="0">بلا وقت</option><option value="15">15 ثانية</option><option value="30">30 ثانية</option><option value="45">45 ثانية</option><option value="60">دقيقة</option></select></div>
+<div class="note">الأرصدة: كل قطعة صحيحة +3، والخطأ −1، والومضة −1 ثم −2 ثم −3، وإطالة الوقت −3.</div>
+<div class="rowb"><button class="go" id="setOk">ابدأوا</button></div></div></div>
+<div class="modal" id="det"><div class="card edc det" dir="rtl"><h2>الإعراب التفصيلي</h2><div class="sent" id="dS"></div><div class="mean" id="dM"></div><ul id="dL"></ul><div class="fabox" id="dF" hidden></div><div class="rowb"><button class="go" id="dFa">لمحة إعرابية</button><button class="go alt" id="dClose">إغلاق</button></div></div></div>
+<canvas id="conf"></canvas>
